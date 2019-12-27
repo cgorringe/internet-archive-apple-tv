@@ -29,7 +29,8 @@ class VideoVC: UIViewController, UICollectionViewDataSource, UICollectionViewDel
             if let data = data {
                 self.collection = collection
                 self.items = data.sorted(by: { (a, b) -> Bool in
-                    return a["downloads"] as! Int > b["downloads"] as! Int
+                    //return a["downloads"] as! Int > b["downloads"] as! Int
+                    return (a["downloads"] as? Int) ?? 0 > (b["downloads"] as? Int) ?? 0  // FIXME: Temp fix to prevent crash
                 })
                 self.collectionView?.reloadData()
             } else {

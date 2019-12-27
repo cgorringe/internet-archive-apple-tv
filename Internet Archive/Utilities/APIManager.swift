@@ -11,7 +11,8 @@ import Alamofire
 
 class APIManager: NSObject {
     static let sharedManager = APIManager()
-    
+
+    let DEBUG_API = true
     let BASE_URL = "https://archive.org/"
     let API_CREATE = "services/xauthn/?op=create"
     let API_LOGIN = "services/xauthn/?op=authenticate"
@@ -36,8 +37,10 @@ class APIManager: NSObject {
         parameters["secret"]    = SECRET
         parameters["version"]   = API_VERSION
         
+        let url = "\(BASE_URL)\(operation)"
+        if DEBUG_API { print("POST: " + url) }
         Alamofire
-            .request("\(BASE_URL)\(operation)", method: .post, parameters: parameters, encoding: URLEncoding.default, headers: HEADERS)
+            .request(url, method: .post, parameters: parameters, encoding: URLEncoding.default, headers: HEADERS)
             .responseJSON{ (response) in
             
             switch response.result {
@@ -72,7 +75,9 @@ class APIManager: NSObject {
             Alamofire.SessionManager.default.session.configuration.httpCookieStorage?.setCookie(cookie)
         }
         
-        Alamofire.request(BASE_URL + API_WEB_LOGIN, method: .post, parameters: params, encoding: URLEncoding.default, headers: ["Content-Type": "application/x-www-form-urlencoded"]).responseString{ (response) in
+        let url = BASE_URL + API_WEB_LOGIN
+        if DEBUG_API { print("POST: " + url) }
+        Alamofire.request(url, method: .post, parameters: params, encoding: URLEncoding.default, headers: ["Content-Type": "application/x-www-form-urlencoded"]).responseString{ (response) in
             
             switch response.result {
             case .success:
@@ -131,10 +136,10 @@ class APIManager: NSObject {
         }
         
         let url = "\(BASE_URL)advancedsearch.php?q=\(query)\(str_option)"
-        let encodedURL = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
-        
+        let encodedURL = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if DEBUG_API { print("GET: " + encodedURL) }
         Alamofire
-            .request(encodedURL!, method: .get, encoding: URLEncoding.default, headers: HEADERS)
+            .request(encodedURL, method: .get, encoding: URLEncoding.default, headers: HEADERS)
             .responseJSON{ (response) in
                 
             switch response.result {
@@ -177,8 +182,10 @@ class APIManager: NSObject {
     }
     
     func getMetaData(identifier: String, completion: @escaping (_ data: [String: Any]?, _ err: Int?) -> Void) {
+        let url = "\(BASE_URL)\(API_METADATA)\(identifier)"
+        if DEBUG_API { print("GET: " + url) }
         Alamofire
-            .request("\(BASE_URL)\(API_METADATA)\(identifier)", method: .get, encoding: URLEncoding.default, headers: HEADERS)
+            .request(url, method: .get, encoding: URLEncoding.default, headers: HEADERS)
             .responseJSON{ (response) in
                 
             switch response.result {
@@ -195,7 +202,7 @@ class APIManager: NSObject {
     func getFavoriteItems(username: String,
                           completion: @escaping(_ success: Bool, _ err: Int?, _ items: [[String: Any]]?) -> Void) {
         let url = "\(BASE_URL)\(API_GET_FAVORITE)\(username.lowercased())"
-        
+        if DEBUG_API { print("GET: " + url) }
         Alamofire.request(url, method: .get, encoding: URLEncoding.default).responseJSON { (data) in
             switch data.result {
             case .success:
@@ -223,9 +230,9 @@ class APIManager: NSObject {
                 Alamofire.SessionManager.default.session.configuration.httpCookieStorage?.setCookie(loggedInUser)
                 
                 let url = "\(self.BASE_URL)\(self.API_SAVE_FAVORITE)&mediatype=\(mediatype)&identifier=\(identifier)&title=\(title)"
-                let encodedURL = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
-                
-                Alamofire.request(encodedURL!, method: .get, encoding: URLEncoding.default)
+                let encodedURL = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                if self.DEBUG_API { print("GET: " + encodedURL) }
+                Alamofire.request(encodedURL, method: .get, encoding: URLEncoding.default)
                     .responseString {(response) in
                     
                         switch response.result {
